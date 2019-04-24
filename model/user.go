@@ -1,5 +1,5 @@
 // Pipe - A small and beautiful blogging platform written in golang.
-// Copyright (C) 2017-2018, b3log.org
+// Copyright (C) 2017-2019, b3log.org & hacpai.com
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -25,13 +25,12 @@ type User struct {
 	Model
 
 	Name              string `gorm:"size:32" json:"name"`
-	Password          string `gorm:"size:255" json:"password"` // https://github.com/b3log/pipe/issues/130
 	Nickname          string `gorm:"size:32" json:"nickname"`
 	AvatarURL         string `gorm:"size:255" json:"avatarURL"`
 	B3Key             string `gorm:"size:32" json:"b3Key"`
 	Locale            string `gorm:"size:32" json:"locale"`
 	TotalArticleCount int    `json:"totalArticleCount"`
-	GithubId          string `gorm:"255" json:"githubId"` // 支持 GitHub 登录 https://github.com/b3log/pipe/issues/150
+	GithubId          string `gorm:"255" json:"githubId"`
 }
 
 // User roles.

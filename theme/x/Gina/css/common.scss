@@ -1,23 +1,13 @@
 /**
- * skin gina style
+ * skin style
  *
  * @author <a href="http://vanessa.b3log.org">Liyuan Li</a>
- * @version 0.1.1.2, Oct 9, 2018
+ * @version 0.2.1.1, Feb 5, 2019
 */
+
+@import 'variables';
 @import '../../../scss/basic';
 @import '../../../scss/github';
-
-// z-index
-// article avatar 10
-// side 99
-// editor 100
-// side bar icon 200
-
-// variable
-$border-color: #e1e4e8;
-$theme-accent: #f47e00;
-$text-color: #24292e;
-$text-hover-color: #586069;
 
 // reset
 html {
@@ -37,12 +27,6 @@ body {
 
 a {
   transition: $transition;
-}
-
-.pipe-content__reset {
-  pre > code {
-    background-image: url(../../../images/code-bg.png);
-  }
 }
 
 // function
@@ -221,9 +205,17 @@ a {
   &__logo {
     position: absolute;
     left: 20px;
+    background-color: rgba(255, 255, 255, .68);
     img {
       height: 35px;
       width: 35px;
+      flex-shrink: 0;
+      margin-top: 15px;
+    }
+
+    div {
+      text-align: left;
+      margin-left: 10px;
     }
   }
 
@@ -259,7 +251,7 @@ a {
     height: 65px;
     box-sizing: border-box;
 
-    a.fn-right {
+    a.fn__right {
       padding: 0 20px 0 0;
       box-sizing: border-box;
 
@@ -433,6 +425,7 @@ a {
     margin-bottom: 30px;
     display: block;
     @include image-bg('../../../images/image-bg.svg');
+    font-size: 0;
 
     &--relevant {
       margin-bottom: 10px;
@@ -998,7 +991,7 @@ a {
     }
   }
 
-  .side > .fn-none {
+  .side > .fn__none {
     display: block;
     &.module__list li {
       border-bottom: 1px dotted $border-color;
@@ -1020,7 +1013,7 @@ a {
   .footer__info {
     text-align: right;
     padding: 20px 0;
-    .fn-right {
+    .fn__right {
       float: none;
     }
   }

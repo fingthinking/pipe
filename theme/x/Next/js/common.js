@@ -2,12 +2,13 @@
  * @fileoverview util and every page should be used.
  *
  * @author <a href="http://vanessa.b3log.org">Liyuan Li</a>
- * @version 0.1.0.0, Dec 11, 2017
+ * @version 0.4.0.0, Mar 28, 2019
  */
 
 import $ from 'jquery'
 import Icon from './symbol'
 import {
+  initPjax,
   KillBrowser,
   PreviewImg,
 } from '../../../js/common'
@@ -19,6 +20,22 @@ const Common = {
   init: () => {
     PreviewImg()
     KillBrowser()
+    initPjax(() => {
+      if ($('#pipeComments').length === 1) {
+        $.ajax({
+          method: 'GET',
+          url: `${$('#pipeLang').data('staticserver')}/theme/x/Next/js/article.min.js?${$('#pipeLang').data('staticresourceversion')}`,
+          dataType: 'script',
+          cache: true,
+        })
+      }
+
+      if ($('#pipeComments').length !== 1 || $('#toc').length !== 1) {
+        $('#sideBar').removeClass('sidebar--active')
+        $('.main').css('margin-right', '0')
+        $('.side').removeClass('side--active')
+      }
+    })
     $('#sideBar').click(function () {
       if ($(this).hasClass('sidebar--active')) {
         $(this).removeClass('sidebar--active')
@@ -68,7 +85,9 @@ const Common = {
     if (count < max) {
       setTimeout(() => {
         increase(max, time, id, ++count)
-        document.getElementById(id).innerHTML = count
+        if (document.getElementById(id)) {
+          document.getElementById(id).innerHTML = count
+        }
       }, time / max)
     }
   },
@@ -99,8 +118,11 @@ const Common = {
   }
 }
 
-window.increase = Common.increase
-window.addLevelToTag = Common.addLevelToTag
-Icon()
-Common.init()
+if (!window.increase) {
+  window.increase = Common.increase
+  window.addLevelToTag = Common.addLevelToTag
+  Icon()
+  Common.init()
+}
+
 export default Common

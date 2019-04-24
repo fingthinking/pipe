@@ -1,5 +1,5 @@
 // Pipe - A small and beautiful blogging platform written in golang.
-// Copyright (C) 2017-2018, b3log.org
+// Copyright (C) 2017-2019, b3log.org & hacpai.com
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -68,10 +68,7 @@ func (srv *categoryService) UpdateCategory(category *model.Category) error {
 		return fmt.Errorf("not found category [id=%d] to update", category.ID)
 	}
 
-	tagStr, err := normalizeTagStr(category.Tags)
-	if nil != err {
-		return err
-	}
+	tagStr := normalizeTagStr(category.Tags)
 	category.Tags = tagStr
 
 	if err := normalizeCategoryPath(category); nil != err {
@@ -113,10 +110,7 @@ func (srv *categoryService) AddCategory(category *model.Category) error {
 	srv.mutex.Lock()
 	defer srv.mutex.Unlock()
 
-	tagStr, err := normalizeTagStr(category.Tags)
-	if nil != err {
-		return err
-	}
+	tagStr := normalizeTagStr(category.Tags)
 	category.Tags = tagStr
 
 	if err := normalizeCategoryPath(category); nil != err {
@@ -137,6 +131,14 @@ func (srv *categoryService) AddCategory(category *model.Category) error {
 	tx.Commit()
 
 	return nil
+}
+
+func (srv *categoryService) GetCategoriesByTag(tagTitle string, blogID uint64) (ret []*model.Category) {
+	if err := db.Where("`blog_id` = ? AND `tags` LIKE ?", blogID, tagTitle).Find(&ret).Error; nil != err {
+		logger.Errorf("get categories failed: " + err.Error())
+	}
+
+	return
 }
 
 func (srv *categoryService) ConsoleGetCategories(page int, blogID uint64) (ret []*model.Category, pagination *util.Pagination) {

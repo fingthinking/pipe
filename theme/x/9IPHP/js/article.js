@@ -7,7 +7,7 @@
 
 import $ from 'jquery'
 import QRious from 'qrious'
-import {InitComment, InitToc, ShowEditor, InitHljs} from '../../../js/article'
+import {InitComment, InitToc, ShowEditor } from '../../../js/article'
 import './common'
 
 const Article = {
@@ -49,7 +49,7 @@ const Article = {
           'margin-top': '300px'
         }, 300, function () {
           $(this).hide()
-          $('.side > .fn-none').show()
+          $('.side > .fn__none').show()
         })
       })
 
@@ -59,7 +59,7 @@ const Article = {
         $('.side__toc').show().animate({
           'margin-top': '0'
         }, 100)
-        $('.side > .fn-none').hide()
+        $('.side > .fn__none').hide()
       })
 
       if ($(window).width() < 768) {
@@ -68,7 +68,6 @@ const Article = {
     }
 
     InitComment()
-    InitHljs()
 
     Article._share()
   },

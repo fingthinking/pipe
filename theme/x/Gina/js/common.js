@@ -2,12 +2,13 @@
  * @fileoverview util and every page should be used.
  *
  * @author <a href="http://vanessa.b3log.org">Liyuan Li</a>
- * @version 0.2.0.1, Oct 9, 2018
+ * @version 0.4.0.0, Mar 28, 2019
  */
 
 import $ from 'jquery'
 import Icon from './symbol'
 import {
+  initPjax,
   KillBrowser,
   PreviewImg,
 } from '../../../js/common'
@@ -17,7 +18,27 @@ const Common = {
    * @description 页面初始化
    */
   init: () => {
+    initPjax(() => {
+      if ($('#pipeComments').length === 1) {
+        $.ajax({
+          method: 'GET',
+          url: `${$('#pipeLang').data('staticserver')}/theme/x/Gina/js/article.min.js?${$('#pipeLang').data('staticresourceversion')}`,
+          dataType: 'script',
+          cache: true,
+        })
+      }
+      if ($('#pipeComments').length === 1 && $('#toc').length === 1) {
+        $('body').addClass('body--side')
+      } else {
+        $('body').removeClass('body--side')
+      }
+      setTimeout(() => {
+        $('.header__logo').width($('.header a').get(1).offsetLeft - 30)
+      }, 301)
+    })
+
     $('.header__logo').width($('.header a').get(1).offsetLeft - 30)
+
     PreviewImg()
     KillBrowser()
     $('#sidebarIcon').click(() => {
@@ -27,12 +48,17 @@ const Common = {
   toggleSide: () => {
     const $body = $('body')
     $body.toggleClass('body--side')
+    setTimeout(() => {
+      $('.header__logo').width($('.header a').get(1).offsetLeft - 30)
+    }, 301)
   },
   increase(max, time, id, count) {
     if (count < max) {
       setTimeout(() => {
         increase(max, time, id, ++count)
-        document.getElementById(id).innerHTML = count
+        if (document.getElementById(id)) {
+          document.getElementById(id).innerHTML = count
+        }
       }, time / max)
     }
   },
@@ -63,8 +89,10 @@ const Common = {
   }
 }
 
-window.increase = Common.increase
-window.addLevelToTag = Common.addLevelToTag
-Icon()
-Common.init()
+if (!window.increase) {
+  window.increase = Common.increase
+  window.addLevelToTag = Common.addLevelToTag
+  Icon()
+  Common.init()
+}
 export default Common

@@ -1,5 +1,5 @@
 // Pipe - A small and beautiful blogging platform written in golang.
-// Copyright (C) 2017-2018, b3log.org
+// Copyright (C) 2017-2019, b3log.org & hacpai.com
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,20 +18,31 @@ package controller
 
 import (
 	"net/http"
-	"path/filepath"
 	"text/template"
 
+	"github.com/b3log/pipe/model"
 	"github.com/b3log/pipe/service"
 	"github.com/b3log/pipe/util"
 	"github.com/gin-gonic/gin"
-	model "github.com/b3log/pipe/model"
 )
 
 func showIndexAction(c *gin.Context) {
-	t, err := template.ParseFiles(filepath.ToSlash(filepath.Join(model.Conf.StaticRoot, "console/dist/index.html")))
+	t, err := template.ParseFiles("console/dist/index.html")
 	if nil != err {
 		logger.Errorf("load index page failed: " + err.Error())
 		c.String(http.StatusNotFound, "load index page failed")
+
+		return
+	}
+
+	t.Execute(c.Writer, nil)
+}
+
+func showStartPageAction(c *gin.Context) {
+	t, err := template.ParseFiles("console/dist/start/index.html")
+	if nil != err {
+		logger.Errorf("load start page failed: " + err.Error())
+		c.String(http.StatusNotFound, "load start page failed")
 
 		return
 	}

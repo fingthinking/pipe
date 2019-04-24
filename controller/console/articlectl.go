@@ -1,5 +1,5 @@
 // Pipe - A small and beautiful blogging platform written in golang.
-// Copyright (C) 2017-2018, b3log.org
+// Copyright (C) 2017-2019, b3log.org & hacpai.com
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -31,10 +31,34 @@ import (
 	"github.com/b3log/pipe/util"
 	"github.com/fatih/structs"
 	"github.com/gin-gonic/gin"
+	"github.com/parnurzeal/gorequest"
 )
 
 // Logger
 var logger = log.NewLogger(os.Stdout)
+
+// PushArticle2RhyAction pushes an article to community.
+func PushArticle2RhyAction(c *gin.Context) {
+	result := util.NewResult()
+	defer c.JSON(http.StatusOK, result)
+
+	idArg := c.Param("id")
+	id, err := strconv.ParseUint(idArg, 10, 64)
+	if nil != err {
+		result.Code = util.CodeErr
+
+		return
+	}
+
+	article := service.Article.ConsoleGetArticle(uint64(id))
+	if nil == article {
+		result.Code = util.CodeErr
+
+		return
+	}
+
+	service.Article.ConsolePushArticle(article)
+}
 
 // MarkdownAction handles markdown text to HTML.
 func MarkdownAction(c *gin.Context) {
@@ -43,17 +67,78 @@ func MarkdownAction(c *gin.Context) {
 
 	arg := map[string]interface{}{}
 	if err := c.BindJSON(&arg); nil != err {
-		result.Code = -1
+		result.Code = util.CodeErr
 		result.Msg = "parses markdown request failed"
 
 		return
 	}
 
-	mdText := arg["mdText"].(string)
+	mdText := arg["markdownText"].(string)
 	mdResult := util.Markdown(mdText)
+	result.Data = mdResult.ContentHTML
+}
+
+var uploadTokenCheckTime, uploadTokenTime int64
+var uploadToken, uploadURL = "", "https://hacpai.com/upload/client"
+
+// UploadTokenAction gets a upload token.
+func UploadTokenAction(c *gin.Context) {
+	result := util.NewResult()
+	defer c.JSON(http.StatusOK, result)
+
+	session := util.GetSession(c)
+	if "" == session.UB3Key {
+		result.Code = util.CodeErr
+
+		return
+	}
+
 	data := map[string]interface{}{}
-	data["html"] = mdResult.ContentHTML
-	result.Data = data
+	result.Data = &data
+	now := time.Now().Unix()
+	if 3600 >= now-uploadTokenTime {
+		data["uploadToken"] = uploadToken
+		data["uploadURL"] = uploadURL
+
+		return
+	}
+
+	if 15 >= now-uploadTokenCheckTime {
+		data["uploadToken"] = uploadToken
+		data["uploadURL"] = uploadURL
+
+		return
+	}
+
+	requestJSON := map[string]interface{}{
+		"userName":  session.UName,
+		"userB3Key": session.UB3Key,
+	}
+
+	requestResult := util.NewResult()
+	_, _, errs := gorequest.New().Post(util.HacPaiURL + "/apis/upload/token").
+		SendStruct(requestJSON).Set("user-agent", model.UserAgent).Timeout(10 * time.Second).EndStruct(requestResult)
+	uploadTokenCheckTime = now
+	if nil != errs {
+		result.Code = util.CodeErr
+		logger.Errorf("get upload token failed: %s", errs)
+
+		return
+	}
+	if util.CodeOk != requestResult.Code {
+		result.Code = util.CodeErr
+		result.Msg = requestResult.Msg
+		logger.Errorf(requestResult.Msg)
+
+		return
+	}
+
+	resultData := requestResult.Data.(map[string]interface{})
+	uploadToken = resultData["uploadToken"].(string)
+	uploadURL = resultData["uploadURL"].(string)
+	uploadTokenTime = now
+	resultData["markedAvailable"] = util.MarkedAvailable
+	result.Data = requestResult.Data
 }
 
 // AddArticleAction adds a new article.
@@ -63,7 +148,7 @@ func AddArticleAction(c *gin.Context) {
 
 	arg := map[string]interface{}{}
 	if err := c.BindJSON(&arg); nil != err {
-		result.Code = -1
+		result.Code = util.CodeErr
 		result.Msg = "parses add article request failed"
 
 		return
@@ -72,7 +157,7 @@ func AddArticleAction(c *gin.Context) {
 	createdAt, err := dateparse.ParseAny(arg["time"].(string))
 	if nil != err {
 		if "" != arg["time"].(string) {
-			result.Code = -1
+			result.Code = util.CodeErr
 			result.Msg = "parses article create time failed"
 
 			return
@@ -97,8 +182,12 @@ func AddArticleAction(c *gin.Context) {
 	}
 	article.CreatedAt = createdAt
 
+	if !arg["syncToCommunity"].(bool) {
+		article.PushedAt = article.CreatedAt
+	}
+
 	if err := service.Article.AddArticle(article); nil != err {
-		result.Code = -1
+		result.Code = util.CodeErr
 		result.Msg = err.Error()
 	}
 }
@@ -111,14 +200,14 @@ func GetArticleAction(c *gin.Context) {
 	idArg := c.Param("id")
 	id, err := strconv.ParseUint(idArg, 10, 64)
 	if nil != err {
-		result.Code = -1
+		result.Code = util.CodeErr
 
 		return
 	}
 
 	article := service.Article.ConsoleGetArticle(uint64(id))
 	if nil == article {
-		result.Code = -1
+		result.Code = util.CodeErr
 
 		return
 	}
@@ -186,7 +275,7 @@ func RemoveArticleAction(c *gin.Context) {
 	idArg := c.Param("id")
 	id, err := strconv.ParseUint(idArg, 10, 64)
 	if nil != err {
-		result.Code = -1
+		result.Code = util.CodeErr
 		result.Msg = err.Error()
 
 		return
@@ -196,7 +285,7 @@ func RemoveArticleAction(c *gin.Context) {
 	blogID := session.BID
 
 	if err := service.Article.RemoveArticle(id, blogID); nil != err {
-		result.Code = -1
+		result.Code = util.CodeErr
 		result.Msg = err.Error()
 	}
 }
@@ -208,7 +297,7 @@ func RemoveArticlesAction(c *gin.Context) {
 
 	arg := map[string]interface{}{}
 	if err := c.BindJSON(&arg); nil != err {
-		result.Code = -1
+		result.Code = util.CodeErr
 		result.Msg = "parses batch remove articles request failed"
 
 		return
@@ -233,7 +322,7 @@ func UpdateArticleAction(c *gin.Context) {
 	idArg := c.Param("id")
 	id, err := strconv.ParseUint(idArg, 10, 64)
 	if nil != err {
-		result.Code = -1
+		result.Code = util.CodeErr
 		result.Msg = err.Error()
 
 		return
@@ -241,7 +330,7 @@ func UpdateArticleAction(c *gin.Context) {
 
 	arg := map[string]interface{}{}
 	if err := c.BindJSON(&arg); nil != err {
-		result.Code = -1
+		result.Code = util.CodeErr
 		result.Msg = "parses update article request failed"
 
 		return
@@ -249,7 +338,7 @@ func UpdateArticleAction(c *gin.Context) {
 
 	createdAt, err := dateparse.ParseAny(arg["time"].(string))
 	if nil != err {
-		result.Code = -1
+		result.Code = util.CodeErr
 		result.Msg = "parses article create time failed"
 
 		return
@@ -271,8 +360,20 @@ func UpdateArticleAction(c *gin.Context) {
 		AuthorID:    session.UID,
 	}
 
+	oldArticle := service.Article.ConsoleGetArticle(id)
+	if nil == oldArticle {
+		result.Code = util.CodeErr
+		result.Msg = err.Error()
+
+		return
+	}
+
+	if !arg["syncToCommunity"].(bool) {
+		article.PushedAt = oldArticle.PushedAt
+	}
+
 	if err := service.Article.UpdateArticle(article); nil != err {
-		result.Code = -1
+		result.Code = util.CodeErr
 		result.Msg = err.Error()
 	}
 }
@@ -289,11 +390,11 @@ func GetArticleThumbsAction(c *gin.Context) {
 
 	w, _ := strconv.Atoi(c.Query("w"))
 	if w < 1 {
-		w = 960
+		w = 768
 	}
 	h, _ := strconv.Atoi(c.Query("h"))
 	if h < 1 {
-		h = 520
+		h = 432
 	}
 
 	var styledURLs []string

@@ -1,5 +1,5 @@
 // Pipe - A small and beautiful blogging platform written in golang.
-// Copyright (C) 2017-2018, b3log.org
+// Copyright (C) 2017-2019, b3log.org & hacpai.com
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -43,37 +43,37 @@ type MarkdownResult struct {
 	ThumbURL     string
 }
 
-var markedAvailable = false
+var MarkedAvailable = false
 
 // LoadMarkdown loads markdown process engine.
 func LoadMarkdown() {
-	request, err := http.NewRequest("POST", "http://localhost:8250", strings.NewReader("Pipe 大法好"))
+	request, err := http.NewRequest("POST", "http://localhost:8250", strings.NewReader("旧日的足迹"))
 	if nil != err {
-		logger.Info("[marked] is not available, uses built-in [blackfriday] for markdown processing")
+		logger.Info("[markdown-http] is not available, uses built-in [blackfriday] for markdown processing")
 
 		return
 	}
 	http.DefaultClient.Timeout = 2 * time.Second
 	response, err := http.DefaultClient.Do(request)
 	if nil != err {
-		logger.Info("[marked] is not available, uses built-in [blackfriday] for markdown processing")
+		logger.Info("[markdown-http] is not available, uses built-in [blackfriday] for markdown processing")
 
 		return
 	}
 	defer response.Body.Close()
 	data, err := ioutil.ReadAll(response.Body)
 	if nil != err {
-		logger.Info("[marked] is not available, uses built-in [blackfriday] for markdown processing")
+		logger.Info("[markdown-http] is not available, uses built-in [blackfriday] for markdown processing")
 
 		return
 	}
 
 	content := string(data)
-	markedAvailable = "<p>Pipe 大法好</p>\n" == content
-	if markedAvailable {
-		logger.Debug("[marked] is available, uses it for markdown processing")
+	MarkedAvailable = "<p>旧日的足迹</p>\n" == content
+	if MarkedAvailable {
+		logger.Debug("[markdown-http] is available, uses it for markdown processing")
 	} else {
-		logger.Debug("[marked] is not available, uses built-in [blackfriday] for markdown processing")
+		logger.Debug("[markdown-http] is not available, uses built-in [blackfriday] for markdown processing")
 	}
 }
 
@@ -87,16 +87,16 @@ func marked(mdText string) []byte {
 	http.DefaultClient.Timeout = time.Second
 	response, err := http.DefaultClient.Do(request)
 	if nil != err {
-		logger.Warnf("[marked] failed [err=" + err.Error() + "], uses built-in [blackfriday] instead")
+		logger.Warnf("[markdown-http] failed [err=" + err.Error() + "], uses built-in [blackfriday] instead")
 
 		return bf(mdText)
 	}
 	defer response.Body.Close()
 	ret, err := ioutil.ReadAll(response.Body)
 	if nil != err {
-		logger.Info("marked failed: " + err.Error())
+		logger.Info("marked failed: " + err.Error() + ", try to use built-in md engine instead")
 
-		return []byte("")
+		return bf(mdText)
 	}
 
 	return ret
@@ -108,6 +108,8 @@ func bf(mdText string) []byte {
 
 // Markdown process the specified markdown text to HTML.
 func Markdown(mdText string) *MarkdownResult {
+	mdText = strings.Replace(mdText, "\r\n", "\n", -1)
+
 	digest := md5.New()
 	digest.Write([]byte(mdText))
 	key := string(digest.Sum(nil))
@@ -119,7 +121,7 @@ func Markdown(mdText string) *MarkdownResult {
 
 	mdText = emojify(mdText)
 	var unsafe []byte
-	if markedAvailable {
+	if MarkedAvailable {
 		unsafe = marked(mdText)
 	} else {
 		unsafe = bf(mdText)
@@ -137,23 +139,26 @@ func Markdown(mdText string) *MarkdownResult {
 			return false
 		}
 		parent := goquery.NodeName(ele.Parent())
-		return parent != "code" && parent != "pre"
+
+		return "span" != parent && "code" != parent && "pre" != parent
 	}).Each(func(i int, ele *goquery.Selection) {
 		text := ele.Text()
 		text = pangu.SpacingText(text)
 		ele.ReplaceWithHtml(text)
 	})
 
-	doc.Find("code").Each(func(i int, ele *goquery.Selection) {
-		code, err := ele.Html()
-		if nil != err {
-			logger.Errorf("get element [%+v]' HTML failed: %s", ele, err)
-		} else {
-			code = strings.Replace(code, "<", "&lt;", -1)
-			code = strings.Replace(code, ">", "&gt;", -1)
-			ele.SetHtml(code)
-		}
-	})
+	if !MarkedAvailable {
+		doc.Find("code").Each(func(i int, ele *goquery.Selection) {
+			code, err := ele.Html()
+			if nil != err {
+				logger.Errorf("get element [%+v]' HTML failed: %s", ele, err)
+			} else {
+				code = strings.Replace(code, "<", "&lt;", -1)
+				code = strings.Replace(code, ">", "&gt;", -1)
+				ele.SetHtml(code)
+			}
+		})
+	}
 
 	contentHTML, _ = doc.Find("body").Html()
 	contentHTML = bluemonday.UGCPolicy().AllowAttrs("class").Matching(regexp.MustCompile("^language-[a-zA-Z0-9]+$")).OnElements("code").
@@ -213,16 +218,25 @@ func runesToString(runes []rune) (ret string) {
 	return
 }
 
-var emojiRegx = regexp.MustCompile(":[a-z_]+:")
+var emojiRegx = regexp.MustCompile(":[\\w]+:")
+var emojiImages = []string{"c.png", "d.png", "e50a.png", "f.png", "g.png", "huaji.gif", "doge.png", "i.png", "j.png", "k.png", "octocat.png", "r.png", "trollface.png", "u.png"}
+
+func emojiImg(emojiASCII string) string {
+	for _, img := range emojiImages {
+		if emojiASCII == img[:strings.Index(img, ".")] {
+			return "<img class=\"emoji\" src=\"https://cdn.jsdelivr.net/npm/vditor/src/assets/emoji/" + img + "\">"
+		}
+	}
+
+	return ":" + emojiASCII + ":"
+}
 
 func emojify(text string) string {
 	return emojiRegx.ReplaceAllStringFunc(text, func(emojiASCII string) string {
 		emojiASCII = strings.Replace(emojiASCII, ":", "", -1)
 		emoji := turtle.Emojis[emojiASCII]
 		if nil == emoji {
-			//logger.Warn("not found [" + emojiASCII + "]")
-
-			return emojiASCII
+			return emojiImg(emojiASCII)
 		}
 
 		return emoji.Char

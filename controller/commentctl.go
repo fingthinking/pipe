@@ -1,5 +1,5 @@
 // Pipe - A small and beautiful blogging platform written in golang.
-// Copyright (C) 2017-2018, b3log.org
+// Copyright (C) 2017-2019, b3log.org & hacpai.com
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -27,7 +27,6 @@ import (
 	"github.com/b3log/pipe/service"
 	"github.com/b3log/pipe/util"
 	"github.com/gin-gonic/gin"
-	"path/filepath"
 )
 
 func getRepliesAction(c *gin.Context) {
@@ -75,8 +74,8 @@ func addCommentAction(c *gin.Context) {
 
 	blogID := getBlogID(c)
 	session := util.GetSession(c)
-	if nil == session {
-		result.Code = -1
+	if 0 == session.UID {
+		result.Code = util.CodeErr
 		result.Msg = "please login before comment"
 
 		return
@@ -87,7 +86,7 @@ func addCommentAction(c *gin.Context) {
 		BlogID:   blogID,
 	}
 	if err := c.BindJSON(comment); nil != err {
-		result.Code = -1
+		result.Code = util.CodeErr
 		result.Msg = "parses add comment request failed"
 
 		return
@@ -96,7 +95,7 @@ func addCommentAction(c *gin.Context) {
 	comment.IP = util.GetRemoteAddr(c)
 
 	if err := service.Comment.AddComment(comment); nil != err {
-		result.Code = -1
+		result.Code = util.CodeErr
 		result.Msg = err.Error()
 	}
 
@@ -125,12 +124,16 @@ func addCommentAction(c *gin.Context) {
 	if 0 != comment.ParentCommentID {
 		parentCommentModel := service.Comment.GetComment(comment.ParentCommentID)
 		if nil != parentCommentModel {
-			parentCommentAuthorModel := service.User.GetUser(parentCommentModel.AuthorID)
+			parentCommentAuthorName := parentCommentModel.AuthorName
+			if "" == parentCommentAuthorName {
+				parentCommentAuthorModel := service.User.GetUser(parentCommentModel.AuthorID)
+				parentCommentAuthorName = parentCommentAuthorModel.Name
+			}
 			parentComment := &model.ThemeComment{
 				ID:  parentCommentModel.ID,
 				URL: getBlogURL(c) + article.Path + "?p=" + strconv.Itoa(page) + "#pipeComment" + strconv.Itoa(int(parentCommentModel.ID)),
 				Author: &model.ThemeAuthor{
-					Name: parentCommentAuthorModel.Name,
+					Name: parentCommentAuthorName,
 				},
 			}
 			themeComment.Parent = parentComment
@@ -139,7 +142,7 @@ func addCommentAction(c *gin.Context) {
 	dataModel["Item"] = themeComment
 	dataModel["ArticleID"] = comment.ArticleID
 
-	t := template.Must(template.New("").ParseFiles(filepath.ToSlash(filepath.Join(model.Conf.StaticRoot, "theme/comment/comment.html"))))
+	t := template.Must(template.New("").ParseFiles("theme/comment/comment.html"))
 
 	htmlBuilder := bytes.Buffer{}
 	if err := t.ExecuteTemplate(&htmlBuilder, "comment/comment", dataModel); nil != err {

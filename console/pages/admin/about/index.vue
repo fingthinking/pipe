@@ -1,29 +1,29 @@
 <template>
   <div class="card">
     <div class="card__body">
-      <div class="fn-flex admin__about">
+      <div class="fn__flex admin__about">
         <div class="about__side">
-          <img src="~/static/images/logo.png"/> <br>
+          <img src="~assets/images/logo.png"/> <br>
           <a class="btn btn--info btn--margin-t30 btn--block btn--success"
              target="_blank"
              href="https://b3log.org/donate.html">{{ $t('becomeSponsor', $store.state.locale) }}</a>
         </div>
-        <div class="fn-flex-1 pipe-content__reset">
-          <h2 class="fn-clear" v-if="isLatest">
-            <span class="fn-left">
+        <div class="fn__flex-1 vditor-reset">
+          <h2 class="fn__clear" v-if="isLatest">
+            <span class="fn__left">
               {{ $t('about1', $store.state.locale) }}
               <a :href="download" target="_blank">{{ version }}</a>
             </span>
-            <iframe class="about__github fn-left"
+            <iframe class="about__github fn__left"
                     src="https://ghbtns.com/github-btn.html?user=b3log&repo=pipe&type=star&count=true&size=large"
                     frameborder="0" scrolling="0" width="160px" height="30px"></iframe>
           </h2>
-          <h2 class="fn-clear" v-else>
-            <span class="fn-left">
+          <h2 class="fn__clear" v-else>
+            <span class="fn__left">
                {{ $t('about2', $store.state.locale) }}
-              <a class="ft-danger" :href="download" target="_blank">{{ version }}</a>
+              <a class="ft__danger" :href="download" target="_blank">{{ version }}</a>
             </span>
-            <iframe class="about__github fn-left"
+            <iframe class="about__github fn__left"
                     src="https://ghbtns.com/github-btn.html?user=b3log&repo=pipe&type=star&count=true&size=large"
                     frameborder="0" scrolling="0" width="160px" height="30px"></iframe>
           </h2>
@@ -38,7 +38,7 @@
               <v-icon>file-text</v-icon>
               {{ $t('doc', $store.state.locale) }}
             </a>
-            <a href="https://hacpai.com/tag/Pipe" target="_blank" class="about__link btn btn--info">
+            <a href="https://hacpai.com/tag/pipe" target="_blank" class="about__link btn btn--info">
               <v-icon>hacpai-logo2</v-icon>
               {{ $t('community', $store.state.locale) }}
             </a>
@@ -82,7 +82,7 @@
   @import '~assets/scss/_variables'
 
   .admin__about
-    .pipe-content__reset h2
+    .vditor-reset h2
       font-size: 1.4em
     .about
       &__side
@@ -110,6 +110,6 @@
         text-align: center
         margin: 15px
         width: auto
-      .pipe-content__reset h2
+      .vditor-reset h2
         font-size: 1.2em
 </style>

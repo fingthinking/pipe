@@ -2,7 +2,7 @@
  * @fileoverview util and every page should be used.
  *
  * @author <a href="http://vanessa.b3log.org">Liyuan Li</a>
- * @version 0.2.2.0, Apr 18, 2018
+ * @version 0.4.0.0, Mar 28, 2019
  */
 
 import $ from 'jquery'
@@ -10,6 +10,7 @@ import Icon from './symbol'
 import {
   KillBrowser,
   PreviewImg,
+  initPjax
 } from '../../../js/common'
 
 const Common = {
@@ -17,6 +18,27 @@ const Common = {
    * @description 页面初始化
    */
   init: () => {
+    initPjax(() => {
+      if ($('#pipeComments').length === 1) {
+        $.ajax({
+          method: 'GET',
+          url: `${$('#pipeLang').data('staticserver')}/theme/x/9IPHP/js/article.min.js?${$('#pipeLang').data('staticresourceversion')}`,
+          dataType: 'script',
+          cache: true,
+        })
+      }
+      $('.nav a, .mobile__nav a').removeClass('nav--current')
+      $('.nav a, .mobile__nav a').each(function (i) {
+        const $it = $(this)
+        if (i === 0 || i === $('.mobile__nav a').length) {
+          if (location.origin + location.pathname === $it.attr('href')) {
+            $it.addClass('nav--current')
+          }
+        } else if (location.href.indexOf($it.attr('href')) > -1) {
+          $it.addClass('nav--current')
+        }
+      })
+    })
     PreviewImg()
     KillBrowser()
 
@@ -54,7 +76,7 @@ const Common = {
       }, 800)
     })
 
-    $('.header .fn-none').click(function () {
+    $('.header .fn__none').click(function () {
       $('.mobile__nav').slideToggle()
     })
 
@@ -70,7 +92,9 @@ const Common = {
     if (count < max) {
       setTimeout(() => {
         increase(max, time, id, ++count)
-        document.getElementById(id).innerHTML = count
+        if (document.getElementById(id)) {
+          document.getElementById(id).innerHTML = count
+        }
       }, time / max)
     }
   },
@@ -101,8 +125,11 @@ const Common = {
   }
 }
 
-window.increase = Common.increase
-window.addLevelToTag = Common.addLevelToTag
-Icon()
-Common.init()
+if (!window.increase) {
+  window.increase = Common.increase
+  window.addLevelToTag = Common.addLevelToTag
+  Icon()
+  Common.init()
+}
+
 export default Common

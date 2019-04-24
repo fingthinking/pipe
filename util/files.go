@@ -1,5 +1,5 @@
 // Pipe - A small and beautiful blogging platform written in golang.
-// Copyright (C) 2017-2018, b3log.org
+// Copyright (C) 2017-2019, b3log.org & hacpai.com
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -90,14 +90,14 @@ func (*myfile) IsDir(path string) bool {
 // CopyFile copies the source file to the dest file.
 func (*myfile) CopyFile(source string, dest string) (err error) {
 	sourcefile, err := os.Open(source)
-	if err != nil {
+	if nil != err {
 		return err
 	}
 
 	defer sourcefile.Close()
 
 	destfile, err := os.Create(dest)
-	if err != nil {
+	if nil != err {
 		return err
 	}
 
@@ -118,25 +118,25 @@ func (*myfile) CopyFile(source string, dest string) (err error) {
 // CopyDir copies the source directory to the dest directory.
 func (*myfile) CopyDir(source string, dest string) (err error) {
 	sourceinfo, err := os.Stat(source)
-	if err != nil {
+	if nil != err {
 		return err
 	}
 
 	// create dest dir
 	err = os.MkdirAll(dest, sourceinfo.Mode())
-	if err != nil {
+	if nil != err {
 		return err
 	}
 
 	directory, err := os.Open(source)
-	if err != nil {
+	if nil != err {
 		return err
 	}
 
 	defer directory.Close()
 
 	objects, err := directory.Readdir(-1)
-	if err != nil {
+	if nil != err {
 		return err
 	}
 
@@ -147,12 +147,12 @@ func (*myfile) CopyDir(source string, dest string) (err error) {
 		if obj.IsDir() {
 			// create sub-directories - recursively
 			err = File.CopyDir(srcFilePath, destFilePath)
-			if err != nil {
+			if nil != err {
 				logger.Error(err)
 			}
 		} else {
 			err = File.CopyFile(srcFilePath, destFilePath)
-			if err != nil {
+			if nil != err {
 				logger.Error(err)
 			}
 		}

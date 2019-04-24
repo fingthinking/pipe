@@ -1,5 +1,5 @@
 // Pipe - A small and beautiful blogging platform written in golang.
-// Copyright (C) 2017-2018, b3log.org
+// Copyright (C) 2017-2019, b3log.org & hacpai.com
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -23,21 +23,20 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/b3log/pipe/log"
-	"github.com/jinzhu/gorm"
 	"github.com/b3log/pipe/util"
+	"github.com/jinzhu/gorm"
 )
 
 // Logger
 var logger = log.NewLogger(os.Stdout)
 
 // Version of Pipe.
-const Version = "1.8.2"
+const Version = "1.8.8"
 
 // Conf of Pipe.
 var Conf *Configuration
@@ -62,15 +61,13 @@ type Configuration struct {
 	Server                string // server scheme, host and port
 	StaticServer          string // static resources server scheme, host and port
 	StaticResourceVersion string // version of static resources
-	OpenRegister          bool   // whether open register
 	LogLevel              string // logging level: trace/debug/info/warn/error/fatal
 	ShowSQL               bool   // whether print sql in log
 	SessionSecret         string // HTTP session secret
-	SessionMaxAge         int    // HTTP session max age (in seciond)
+	SessionMaxAge         int    // HTTP session max age (in second)
 	RuntimeMode           string // runtime mode (dev/prod)
 	SQLite                string // SQLite database file path
 	MySQL                 string // MySQL connection URL
-	StaticRoot            string // static resources file root path
 	Port                  string // listen port
 	AxiosBaseURL          string // axio base URL
 	MockServer            string // mock server
@@ -83,13 +80,13 @@ func LoadConf() {
 	confServer := flag.String("server", "", "this will override Conf.Server if specified")
 	confStaticServer := flag.String("static_server", "", "this will override Conf.StaticServer if specified")
 	confStaticResourceVer := flag.String("static_resource_ver", "", "this will override Conf.StaticResourceVersion if specified")
-	confOpenRegister := flag.Bool("open_register", true, "this will override Conf.OpenRegister if specified")
 	confLogLevel := flag.String("log_level", "", "this will override Conf.LogLevel if specified")
 	confShowSQL := flag.Bool("show_sql", false, "this will override Conf.ShowSQL if specified")
+	confSessionSecret := flag.String("session_secret", "", "this will override Conf.SessionSecret")
+	confSessionMaxAge := flag.Int("session_max_age", 0, "this will override Conf.SessionMaxAge")
 	confRuntimeMode := flag.String("runtime_mode", "", "this will override Conf.RuntimeMode if specified")
 	confSQLite := flag.String("sqlite", "", "this will override Conf.SQLite if specified")
 	confMySQL := flag.String("mysql", "", "this will override Conf.MySQL if specified")
-	confStaticRoot := flag.String("static_root", "", "this will override Conf.StaticRoot if specified")
 	confPort := flag.String("port", "", "this will override Conf.Port if specified")
 	s2m := flag.Bool("s2m", false, "dumps SQLite data to MySQL SQL script file")
 
@@ -117,12 +114,20 @@ func LoadConf() {
 		log.SetLevel(*confLogLevel)
 	}
 
-	if !*confOpenRegister {
-		Conf.OpenRegister = false
-	}
-
 	if *confShowSQL {
 		Conf.ShowSQL = true
+	}
+
+	if "" != *confSessionSecret {
+		Conf.SessionSecret = *confSessionSecret
+	}
+
+	if 0 < *confSessionMaxAge {
+		Conf.SessionMaxAge = *confSessionMaxAge
+	}
+
+	if "" == Conf.SessionSecret {
+		Conf.SessionSecret = util.RandString(32)
 	}
 
 	home, err := util.UserHome()
@@ -159,12 +164,7 @@ func LoadConf() {
 	}
 	if "" != *confMySQL {
 		Conf.MySQL = *confMySQL
-	}
-
-	Conf.StaticRoot = ""
-	if "" != *confStaticRoot {
-		Conf.StaticRoot = *confStaticRoot
-		Conf.StaticRoot = filepath.Dir(Conf.StaticRoot)
+		Conf.SQLite = ""
 	}
 
 	if "" != *confPort {

@@ -1,5 +1,5 @@
 // Pipe - A small and beautiful blogging platform written in golang.
-// Copyright (C) 2017-2018, b3log.org
+// Copyright (C) 2017-2019, b3log.org & hacpai.com
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -24,32 +24,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// UpdatePasswordAction updates a user's password.
-func UpdatePasswordAction(c *gin.Context) {
-	result := util.NewResult()
-	defer c.JSON(http.StatusOK, result)
-
-	arg := map[string]interface{}{}
-	if err := c.BindJSON(&arg); nil != err {
-		result.Code = -1
-		result.Msg = "parses update user's password request failed"
-
-		return
-	}
-
-	password := arg["password"].(string)
-
-	session := util.GetSession(c)
-	user := service.User.GetUserByName(session.UName)
-	user.Password = password
-	if err := service.User.UpdateUser(user); nil != err {
-		result.Code = -1
-		result.Msg = err.Error()
-
-		return
-	}
-}
-
 // UpdateAccountAction updates an account.
 func UpdateAccountAction(c *gin.Context) {
 	result := util.NewResult()
@@ -57,7 +31,7 @@ func UpdateAccountAction(c *gin.Context) {
 
 	arg := map[string]interface{}{}
 	if err := c.BindJSON(&arg); nil != err {
-		result.Code = -1
+		result.Code = util.CodeErr
 		result.Msg = "parses update account request failed"
 
 		return
@@ -71,7 +45,7 @@ func UpdateAccountAction(c *gin.Context) {
 	user.B3Key = b3Key
 	user.AvatarURL = avatarURL
 	if err := service.User.UpdateUser(user); nil != err {
-		result.Code = -1
+		result.Code = util.CodeErr
 		result.Msg = err.Error()
 
 		return
