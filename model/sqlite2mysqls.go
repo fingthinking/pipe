@@ -24,15 +24,18 @@ func sqlite2MySQL(sqliteDataFilePath, mysqlConn string) {
 	sqlite, err := gorm.Open("sqlite3", Conf.SQLite)
 	if nil != err {
 		logger.Fatalf("opens SQLite database failed: " + err.Error())
+		panic("opens SQLite database failed: " + err.Error())
 	}
+	defer sqlite.Close()
 	mysql, err := gorm.Open("mysql", Conf.MySQL)
 	if nil != err {
 		logger.Fatalf("opens MySQL database failed: " + err.Error())
+		panic("opens MySQL database failed: "+err.Error())
 	}
+	defer mysql.Close()
 	if err = mysql.AutoMigrate(Models...).Error; nil != err {
 		logger.Fatal("auto migrate tables failed: " + err.Error())
 	}
-
 	importArchives(sqlite, mysql, []*Archive{})
 	importArticles(sqlite, mysql, []*Article{})
 	importCategories(sqlite, mysql, []*Category{})

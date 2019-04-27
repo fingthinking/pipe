@@ -1,0 +1,89 @@
+## 模型模块
+
+
+- confs.go: 配置文件
+    - 
+- model.go: 模型model
+    - ID
+    - createAt
+    - updateAt
+    - deleteAt ? 这个字段为啥用指针 
+- archive.go: 归档model
+    - year 归档年
+    - month 归档月
+    - articleCount 文章数量
+    - BlogId 
+- article.go: 文章model
+    - 作者id
+    - 标题
+    - 摘要
+    - 标签
+    - 内容
+    - path路径
+    - status状态
+    - 置顶？
+    - 允许评论？
+    - 阅读数量
+    - 评论数量
+    - IP ??? 
+    - UserAgent ???
+    - PushedAt发表时间
+    - BlogID
+- category.go: 分类model
+    - Title 分类标题
+    - 分类路径
+    - 分类描述
+    - MetaKeywords ???
+    - MetaDescription ???
+    - Tags ???
+    - Number ???
+    - BlogId
+- comment.go: 评论model
+    - 文章id
+    - 评论作者id
+    - 评论内容
+    - 父评论id
+    - IP ???
+    - UserAgent ???
+    - PushAt发表时间
+    - AuthorName 作者名
+    - AuthorAvatarUrl 作者头像
+    - BlogId
+- correlation.go: 关系model
+- navigation.go: 导航model
+    - title: 标题
+    - url: 链接
+    - iconUrl: 图标url
+    - openMethod: 打开方式
+    - number: 排序序号
+    - BlogId
+- setting.go: 设置model
+    - category: 分类
+        - system
+        - basic
+        - preference
+        - sign
+        - i18n
+        - feed
+        - thirdStatistic
+        - statistic
+        - ad
+    - name: 名字
+    - value: 值 
+- tag.go: 标签
+    - title: 标签名
+    - articleCount: 文章数量
+    - BlogId
+- themestruct.go: 主题model
+    - 内容比较多
+- user.go: 用户model
+    - Name: 用户名
+    - Nickname: 昵称
+    - AvatarURL: 头像
+    - B3Key ???
+    - Locale 区域
+    - TotalArticleCount: 文章数量
+    - GithubId: githubId 
+- sqlite2mysqls.go: sqlite转mysql
+
+    

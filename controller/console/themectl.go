@@ -49,7 +49,7 @@ func UpdateThemeAction(c *gin.Context) {
 }
 
 // GetThemesAction gets themes.
-func GetThemesAction(c *gin.Context) {
+func  GetThemesAction(c *gin.Context) {
 	result := util.NewResult()
 	defer c.JSON(http.StatusOK, result)
 

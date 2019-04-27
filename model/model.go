@@ -23,5 +23,6 @@ type Model struct {
 	ID        uint64     `gorm:"primary_key" json:"id" structs:"id"`
 	CreatedAt time.Time  `json:"createdAt" structs:"createdAt"`
 	UpdatedAt time.Time  `json:"updatedAt" structs:"updatedAt"`
+	// TODO 为啥这地方用了指针？？？
 	DeletedAt *time.Time `sql:"index" json:"deletedAt" structs:"deletedAt"`
 }

@@ -104,6 +104,7 @@ func LoadConf() {
 	}
 
 	Conf = &Configuration{}
+	// 默认从pipe.json读取配置
 	if err = json.Unmarshal(bytes, Conf); nil != err {
 		logger.Fatal("parses [pipe.json] failed: ", err)
 	}

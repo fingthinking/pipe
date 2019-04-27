@@ -44,15 +44,18 @@ var logger *log.Logger
 
 // The only one init function in pipe.
 func init() {
+	// 随机数种子
 	rand.Seed(time.Now().UTC().UnixNano())
-
+	// 设置日志级别
 	log.SetLevel("warn")
+	// 设置日志输出
 	logger = log.NewLogger(os.Stdout)
-
+	// 加载配置
 	model.LoadConf()
 	util.LoadMarkdown()
 	i18n.Load()
 	theme.Load()
+	// 替换服务地址配置
 	replaceServerConf()
 
 	if "dev" == model.Conf.RuntimeMode {
@@ -67,6 +70,7 @@ func init() {
 func main() {
 	service.ConnectDB()
 	service.Upgrade.Perform()
+	// 启动定时任务
 	cron.Start()
 
 	router := controller.MapRoutes()
